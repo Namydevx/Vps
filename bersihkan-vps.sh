@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bersihkan semua di VPS - Gunakan dengan hati-hati!
-# Diuji untuk Ubuntu/Debian
+# Diuji pada Ubuntu/Debian
 
 echo "🚨 Peringatan: Script ini akan membersihkan sistem Anda!"
 read -p "Lanjutkan? (y/n): " confirm
@@ -19,13 +19,13 @@ echo "👥 Hapus user tidak penting (selain root)..."
 for user in $(awk -F: '$3 >= 1000 {print $1}' /etc/passwd); do
     if [[ "$user" != "root" ]]; then
         echo "🔸 Menghapus user: $user"
-        userdel -r $user
+        userdel -r $user 2>/dev/null
     fi
 done
 
 echo "📅 Hapus semua cron jobs..."
-rm -f /etc/cron.d/*
-rm -f /var/spool/cron/crontabs/*
+rm -f /etc/cron.d/* 2>/dev/null
+rm -f /var/spool/cron/crontabs/* 2>/dev/null
 crontab -r 2>/dev/null
 
 echo "🔥 Hapus semua rules firewall (iptables)..."
@@ -35,12 +35,15 @@ iptables -t nat -F
 iptables -t nat -X
 
 echo "🗑️ Hapus file sampah..."
-rm -rf /var/log/*
-rm -rf /tmp/*
-rm -rf /var/tmp/*
-rm -rf ~/.bash_history
-history -c
+rm -rf /var/log/* /tmp/* /var/tmp/* ~/.bash_history 2>/dev/null
+history -c 2>/dev/null
 
 echo "✅ Pembersihan selesai. Sebaiknya reboot."
 read -p "Reboot sekarang? (y/n): " reboot_now
-[[ "$reboot_now" == "y" ]] && reboot
+if [[ "$reboot_now" == "y" ]]; then
+  if command -v reboot >/dev/null; then
+    reboot
+  else
+    echo "❌ Perintah 'reboot' tidak ditemukan. Silakan reboot manual dengan: sudo reboot"
+  fi
+fi
